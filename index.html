@@ -3,550 +3,250 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ระบบเช็คชื่อทำเวรรักษาความสะอาดรายวัน (Cloud Sync)</title>
-  
-  <link rel="preconnect" href="https://fonts.googleapis.com">
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Prompt:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
-  
+  <title>ระบบเช็คชื่อความสะอาดเวรประจำวัน</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: { sans: ['Prompt', 'sans-serif'] },
-          colors: {
-            brand: { 50: '#f0fdf4', 100: '#dcfce7', 500: '#22c55e', 600: '#16a34a', 700: '#15803d' }
-          }
-        }
-      }
-    }
-  </script>
-  
-  <script src="https://unpkg.com/lucide@latest"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-  
+  <link href="https://fonts.googleapis.com/css2?family=Prompt:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
-    ::-webkit-scrollbar { width: 6px; height: 6px; }
-    ::-webkit-scrollbar-track { background: #f1f5f9; }
-    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
-    input[type="checkbox"] { cursor: pointer; transition: all 0.2s ease-in-out; }
-    input[type="checkbox"]:checked { transform: scale(1.1); }
+    body { font-family: 'Prompt', sans-serif; }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 font-sans min-h-screen flex flex-col antialiased">
+<body class="bg-slate-50 min-h-screen pb-12">
 
   <!-- Header -->
-  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-sm">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-      <div class="flex justify-between h-16 items-center">
-        <div class="flex items-center space-x-3">
-          <div class="bg-gradient-to-tr from-emerald-600 to-teal-500 p-2.5 rounded-xl text-white shadow-md">
-            <i data-lucide="cloud-sync" class="w-6 h-6"></i>
-          </div>
-          <div>
-            <h1 class="text-base sm:text-xl font-bold text-slate-900">ระบบเช็คชื่อทำเวร (เชื่อมต่อ Google Sheets)</h1>
-            <p class="text-xs text-slate-500 hidden sm:block">34 นักเรียน | บันทึกข้อมูลเข้าคลาวด์ส่วนกลางทันที</p>
-          </div>
-        </div>
-        <div>
-          <button onclick="toggleAdminModal()" class="inline-flex items-center space-x-2 px-3 sm:px-4 py-2 text-sm font-medium rounded-xl text-slate-700 bg-slate-100 hover:bg-slate-200 transition shadow-sm border border-slate-200">
-            <i data-lucide="shield-check" class="w-4 h-4 text-emerald-600"></i>
-            <span id="adminBtnText">ไอที แอดมิน (gun)</span>
-          </button>
-        </div>
+  <header class="bg-indigo-600 text-white shadow-lg sticky top-0 z-50">
+    <div class="max-w-4xl mx-auto px-4 py-4 flex flex-col sm:flex-row justify-between items-center gap-3">
+      <h1 class="text-xl font-bold flex items-center gap-2">
+        🧹 ระบบเช็คชื่อเวรทำความสะอาด (34 คน)
+      </h1>
+      <div class="flex gap-2 bg-indigo-700 p-1 rounded-lg">
+        <button id="tabDaily" onclick="switchTab('daily')" class="px-4 py-1.5 rounded-md font-medium text-sm transition bg-white text-indigo-600 shadow">เช็คชื่อรายวัน</button>
+        <button id="tabMonthly" onclick="switchTab('monthly')" class="px-4 py-1.5 rounded-md font-medium text-sm transition text-white hover:bg-indigo-600">สถิติประจำเดือน</button>
       </div>
     </div>
   </header>
 
-  <!-- Main Container -->
-  <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 flex-grow w-full space-y-6">
-    <div class="bg-white rounded-2xl p-4 sm:p-5 shadow-sm border border-slate-200 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-      <div class="flex flex-wrap items-center gap-3">
-        <div class="flex items-center bg-slate-100 p-1.5 rounded-xl border border-slate-200">
-          <button id="tabDaily" onclick="switchView('daily')" class="px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-900 transition flex items-center space-x-2">
-            <i data-lucide="calendar-check" class="w-4 h-4 text-emerald-600"></i>
-            <span>เช็ครายวัน</span>
-          </button>
-          <button id="tabMonthly" onclick="switchView('monthly')" class="px-4 py-2 text-sm font-medium rounded-lg text-slate-600 hover:text-slate-900 transition flex items-center space-x-2">
-            <i data-lucide="bar-chart-3" class="w-4 h-4 text-indigo-600"></i>
-            <span>สถิติประจำเดือน</span>
-          </button>
+  <main class="max-w-4xl mx-auto px-4 mt-6">
+
+    <!-- TAB 1: เช็คชื่อรายวัน -->
+    <div id="viewDaily" class="space-y-4">
+      <div class="bg-white p-4 rounded-xl shadow-sm border flex flex-col sm:flex-row justify-between items-center gap-4">
+        <div class="flex items-center gap-2 w-full sm:w-auto">
+          <label class="font-medium text-gray-700 text-sm whitespace-nowrap">เลือกวันที่:</label>
+          <input type="date" id="checkDate" class="border rounded-lg px-3 py-1.5 text-sm w-full sm:w-auto focus:ring-2 focus:ring-indigo-500 outline-none">
         </div>
-        <div id="datePickerContainer" class="flex items-center space-x-2">
-          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider hidden sm:block">วันที่:</label>
-          <input type="date" id="currentDate" onchange="onDateChange()" class="bg-slate-50 border border-slate-300 text-slate-900 text-sm rounded-xl p-2.5 font-medium shadow-sm">
-        </div>
-        <div id="monthPickerContainer" class="hidden flex items-center space-x-2">
-          <label class="text-xs font-semibold text-slate-500 uppercase tracking-wider">ประจำเดือน:</label>
-          <select id="selectMonth" onchange="renderMonthlyView()" class="bg-slate-50 border border-slate-300 text-sm rounded-xl p-2.5 font-medium shadow-sm">
-            <option value="0">มกราคม</option><option value="1">กุมภาพันธ์</option><option value="2">มีนาคม</option><option value="3">เมษายน</option><option value="4">พฤษภาคม</option><option value="5">มิถุนายน</option><option value="6">กรกฎาคม</option><option value="7">สิงหาคม</option><option value="8">กันยายน</option><option value="9">ตุลาคม</option><option value="10">พฤศจิกายน</option><option value="11">ธันวาคม</option>
-          </select>
-          <select id="selectYear" onchange="renderMonthlyView()" class="bg-slate-50 border border-slate-300 text-sm rounded-xl p-2.5 font-medium shadow-sm"></select>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <button onclick="checkAll(true)" class="flex-1 sm:flex-initial px-3 py-1.5 bg-emerald-50 text-emerald-600 border border-emerald-200 rounded-lg text-xs font-medium hover:bg-emerald-100">เลือกทั้งหมด</button>
+          <button onclick="checkAll(false)" class="flex-1 sm:flex-initial px-3 py-1.5 bg-rose-50 text-rose-600 border border-rose-200 rounded-lg text-xs font-medium hover:bg-rose-100">ยกเลิกทั้งหมด</button>
         </div>
       </div>
-      <div id="dailyActions" class="flex items-center space-x-2">
-        <button onclick="markAll(true)" class="px-3 py-2 text-xs font-semibold bg-emerald-50 text-emerald-700 hover:bg-emerald-100 rounded-lg transition border border-emerald-200 flex items-center space-x-1">
-          <i data-lucide="check-circle-2" class="w-4 h-4"></i><span>ติ๊กทำเวรทั้งหมด</span>
-        </button>
-        <button onclick="markAll(false)" class="px-3 py-2 text-xs font-semibold bg-slate-100 text-slate-600 hover:bg-slate-200 rounded-lg transition border border-slate-300 flex items-center space-x-1">
-          <i data-lucide="x-circle" class="w-4 h-4"></i><span>ยกเลิกทั้งหมด</span>
+
+      <!-- รายชื่อนักเรียน 34 คน -->
+      <div id="studentList" class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <!-- JS จะสร้างรายการตรงนี้ -->
+      </div>
+
+      <!-- ปุ่มบันทึก -->
+      <div class="sticky bottom-4">
+        <button onclick="saveData()" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-3.5 rounded-xl shadow-lg transition flex items-center justify-center gap-2 text-base">
+          💾 บันทึกข้อมูลเข้า Google Sheets
         </button>
       </div>
     </div>
 
-    <!-- Sync status banner -->
-    <div id="syncStatus" class="hidden bg-indigo-50 border border-indigo-200 rounded-xl p-3 text-xs text-indigo-700 flex items-center space-x-2">
-      <i data-lucide="refresh-cw" class="w-4 h-4 animate-spin"></i>
-      <span id="syncText">กำลังซิงค์ข้อมูลไป Google Sheets...</span>
+    <!-- TAB 2: สถิติรายเดือน -->
+    <div id="viewMonthly" class="hidden space-y-6">
+      <div class="bg-white p-4 rounded-xl shadow-sm border flex items-center gap-3">
+        <label class="font-medium text-gray-700 text-sm">เลือกเดือน/ปี:</label>
+        <input type="month" id="monthPicker" onchange="loadMonthlyStats()" class="border rounded-lg px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-indigo-500">
+      </div>
+
+      <!-- สรุปตัวเลข & กราฟ -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div class="bg-white p-5 rounded-xl shadow-sm border flex flex-col justify-center items-center text-center">
+          <span class="text-xs text-gray-500 font-medium">ทำเวรสำเร็จภาพรวม</span>
+          <span id="statPercent" class="text-3xl font-bold text-indigo-600 mt-1">0%</span>
+        </div>
+        <div class="bg-white p-4 rounded-xl shadow-sm border md:col-span-2 flex justify-center items-center h-48">
+          <canvas id="chartMonthly"></canvas>
+        </div>
+      </div>
+
+      <!-- ตารางสรุปรายบุคคล -->
+      <div class="bg-white rounded-xl shadow-sm border overflow-hidden">
+        <table class="w-full text-left text-sm">
+          <thead class="bg-slate-100 text-gray-700 border-b">
+            <tr>
+              <th class="p-3">รหัส</th>
+              <th class="p-3">ชื่อ - นามสกุล</th>
+              <th class="p-3 text-center">ทำเวร (วัน)</th>
+              <th class="p-3 text-center">ร้อยละ (%)</th>
+            </tr>
+          </thead>
+          <tbody id="monthlyTable" class="divide-y">
+            <!-- JS จะสร้างตารางตรงนี้ -->
+          </tbody>
+        </table>
+      </div>
     </div>
 
-    <!-- Daily View -->
-    <div id="dailyView" class="space-y-6">
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 flex justify-between items-center bg-slate-50">
-          <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-            <i data-lucide="list-checks" class="w-5 h-5 text-emerald-600"></i>
-            <span>รายชื่อนักเรียนเช็คเวรประจำวัน (<span id="displaySelectedDate"></span>)</span>
-          </h3>
-          <span id="editModeNotice" class="text-xs text-amber-600 bg-amber-50 px-3 py-1 rounded-full border border-amber-200 font-medium hidden">🔒 โหมดดูอย่างเดียว (ต้องเข้าสู่ระบบแอดมิน gun เพื่อแก้ไขย้อนหลัง)</span>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th class="py-3 px-4 w-16 text-center">ลำดับ</th>
-                <th class="py-3 px-4 w-28">รหัสประจำตัว</th>
-                <th class="py-3 px-4">ชื่อ - นามสกุล</th>
-                <th class="py-3 px-4 w-36 text-center">ทำเวรแล้ว (✔️)</th>
-                <th class="py-3 px-4">หมายเหตุ / โซนทำความสะอาด</th>
-              </tr>
-            </thead>
-            <tbody id="attendanceTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <!-- Monthly View -->
-    <div id="monthlyView" class="hidden space-y-6">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm space-y-4">
-          <h3 class="font-bold text-slate-800 text-base border-b border-slate-100 pb-3 flex items-center space-x-2">
-            <i data-lucide="calendar" class="w-5 h-5 text-indigo-600"></i>
-            <span>ภาพรวมเดือน <span id="monthlyTitleText"></span></span>
-          </h3>
-          <div class="space-y-3 text-xs">
-            <div class="flex justify-between items-center p-3 bg-slate-50 rounded-xl font-medium"><span>วันทำการจริง:</span><span id="monthlyWorkingDays" class="font-bold text-slate-800">0 วัน</span></div>
-            <div class="flex justify-between items-center p-3 bg-emerald-50 rounded-xl font-medium text-emerald-800"><span>ทำเวรรวมทั้งหมด:</span><span id="monthlyTotalChecked" class="font-bold text-emerald-700">0 ครั้ง</span></div>
-            <div class="flex justify-between items-center p-3 bg-indigo-50 rounded-xl font-medium text-indigo-800"><span>อัตราทำเวรเฉลี่ย:</span><span id="monthlyAvgPercent" class="font-bold text-indigo-700">0%</span></div>
-          </div>
-        </div>
-        <div class="bg-white p-6 rounded-2xl border border-slate-200 shadow-sm md:col-span-2 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
-            <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2"><i data-lucide="pie-chart" class="w-5 h-5 text-indigo-600"></i><span>สัดส่วนสถิติการทำเวรความสะอาด</span></h3>
-            <p class="text-xs text-slate-500 mt-1">แสดงสัดส่วนการปฏิบัติหน้าที่เทียบกับวันทำการทั้งหมด</p>
-          </div>
-          <div class="w-48 h-48 relative flex-shrink-0"><canvas id="monthlyChart"></canvas></div>
-        </div>
-      </div>
-      <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
-        <div class="px-6 py-4 border-b border-slate-200 bg-slate-50 flex justify-between items-center">
-          <h3 class="font-bold text-slate-800 text-base flex items-center space-x-2">
-            <i data-lucide="table" class="w-5 h-5 text-indigo-600"></i><span>ตารางสรุปรายบุคคลประจำเดือน</span>
-          </h3>
-        </div>
-        <div class="overflow-x-auto">
-          <table class="w-full text-left border-collapse">
-            <thead>
-              <tr class="bg-slate-100/70 border-b border-slate-200 text-xs font-semibold text-slate-600 uppercase tracking-wider">
-                <th class="py-3 px-4 w-16 text-center">ลำดับ</th>
-                <th class="py-3 px-4 w-28">รหัสประจำตัว</th>
-                <th class="py-3 px-4">ชื่อ - นามสกุล</th>
-                <th class="py-3 px-4 text-center">จำนวนวันที่ทำเวร</th>
-                <th class="py-3 px-4 text-center">วันทำการทั้งหมด</th>
-                <th class="py-3 px-4 text-center">ร้อยละ (%)</th>
-                <th class="py-3 px-4 text-center">ผลประเมิน</th>
-              </tr>
-            </thead>
-            <tbody id="monthlyTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
-          </table>
-        </div>
-      </div>
-    </div>
   </main>
 
-  <!-- Admin Modal -->
-  <div id="adminModal" class="fixed inset-0 z-50 hidden bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4">
-    <div class="bg-white rounded-2xl shadow-2xl max-w-xl w-full flex flex-col overflow-hidden border border-slate-200 max-h-[90vh]">
-      <div class="px-6 py-4 bg-slate-900 text-white flex justify-between items-center shrink-0">
-        <div class="flex items-center space-x-2"><i data-lucide="shield-alert" class="w-5 h-5 text-emerald-400"></i><h3 class="font-bold text-base">ระบบจัดการไอที (IT Admin)</h3></div>
-        <button onclick="toggleAdminModal()" class="text-slate-400 hover:text-white"><i data-lucide="x" class="w-5 h-5"></i></button>
-      </div>
-      <div class="p-6 space-y-4 overflow-y-auto">
-        <div id="adminLoginForm" class="space-y-3">
-          <div class="bg-emerald-50 border border-emerald-200 rounded-xl p-3 text-emerald-800 text-xs">
-            <p class="font-semibold">กรอกรหัสผ่านผู้ดูแลระบบ:</p>
-            <p class="mt-1">Username: <strong>gun</strong> | Password: <strong>11111111</strong></p>
-          </div>
-          <div><label class="block text-xs font-semibold text-slate-600 mb-1">Username:</label><input type="text" id="adminUser" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm"></div>
-          <div><label class="block text-xs font-semibold text-slate-600 mb-1">Password:</label><input type="password" id="adminPass" class="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-sm"></div>
-          <p id="loginError" class="text-xs text-rose-600 font-medium hidden">ชื่อผู้ใช้หรือรหัสผ่านไม่ถูกต้อง!</p>
-          <button onclick="loginAdmin()" class="w-full bg-emerald-600 hover:bg-emerald-700 text-white font-semibold py-2.5 rounded-xl transition shadow-md">เข้าสู่ระบบแอดมิน</button>
-        </div>
-        
-        <div id="adminPanelContent" class="hidden space-y-5">
-          <div class="flex justify-between items-center bg-emerald-50 p-3 rounded-xl border border-emerald-200">
-            <span class="text-xs font-bold text-emerald-700 flex items-center space-x-1"><i data-lucide="check-circle" class="w-4 h-4"></i><span>เข้าสู่ระบบในชื่อ: Admin gun</span></span>
-            <button onclick="logoutAdmin()" class="text-xs text-rose-600 hover:underline font-semibold">ออกจากระบบ</button>
-          </div>
-
-          <div>
-            <h4 class="font-bold text-xs text-slate-800 mb-2 flex items-center space-x-1">
-              <i data-lucide="user-cog" class="w-4 h-4 text-indigo-600"></i>
-              <span>แก้ไขชื่อนักเรียน (34 คน)</span>
-            </h4>
-            <div class="max-h-48 overflow-y-auto border border-slate-200 rounded-xl divide-y divide-slate-100 bg-slate-50">
-              <table class="w-full text-left text-xs">
-                <thead class="bg-slate-100 sticky top-0">
-                  <tr>
-                    <th class="p-2 w-16 text-center">รหัส</th>
-                    <th class="p-2">ชื่อ - นามสกุล</th>
-                    <th class="p-2 w-20 text-center">จัดการ</th>
-                  </tr>
-                </thead>
-                <tbody id="adminStudentList"></tbody>
-              </table>
-            </div>
-          </div>
-          <div class="pt-3 border-t border-slate-200">
-            <button onclick="resetSystemData()" class="w-full bg-rose-50 hover:bg-rose-100 text-rose-700 font-semibold text-xs py-2.5 rounded-xl border border-rose-200 transition">⚠️ รีเซ็ตข้อมูลในเครื่อง</button>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
   <script>
-    // 🌐 นำ URL ของ Google Apps Script ที่ได้จากขั้นตอนที่ 1 มาวางตรงนี้
-    const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbxKW5JqMc_E53AY69u699za-S4ImnuTjeL7Sg4fcpUxOyu4FpyrGr32cRwnuH5mWNQ/exec";
+    // ⚠️ นำ URL จาก Apps Script (/exec) มาใส่ตรงนี้ครับ
+    const API_URL = "https://script.google.com/macros/s/AKfycbw045POHSAmHVLf-2CfaY0DVgZ8Tn7TtdgwKe9HlGRi-1-lhZjkiT1dul5ALIO-h2LT/exec";
 
-    const INITIAL_STUDENTS = [
-      { id: "31965", name: "เด็กชายเกียรติกร ประทุมศรี" }, { id: "31966", name: "เด็กชายคณพศ ศรเพ็ชร" },
-      { id: "31967", name: "เด็กชายจักรพันธ์ คำภีระเกษ" }, { id: "31968", name: "เด็กชายชยพล โต๊ะงาม" },
-      { id: "31969", name: "เด็กชายชัญญาวรรธน คำศรี" }, { id: "31970", name: "เด็กชายชินดนัย พันธ์ศรีเมือง" },
-      { id: "31971", name: "เด็กชายณัฐชานนท์ ศิริบูรณ์" }, { id: "31972", name: "เด็กชายธนภัทร สาลีวงษ์" },
-      { id: "31973", name: "เด็กชายธนานนท์ จักรคำ" }, { id: "31974", name: "เด็กชายปุณณนัส มุขขันธ์" },
-      { id: "31975", name: "เด็กชายภูศิริ บุญรอด" }, { id: "31976", name: "เด็กหญิงกัญญาลภัส ศรีมุกดา" },
-      { id: "31977", name: "เด็กหญิงกัญญาภัทร วงศ์สุทธา" }, { id: "31978", name: "เด็กหญิงกันต์ฤทัย แปงแสง" },
-      { id: "31979", name: "เด็กหญิงกันย์ทริกา บุญรอด" }, { id: "31980", name: "เด็กหญิงกุลภัสสร์ สุพรรณ์" },
-      { id: "31981", name: "เด็กหญิงชาลิสา ทองแสง" }, { id: "31983", name: "เด็กหญิงณัฏฐพิมล ธันยวัฒนาเดช" },
-      { id: "31984", name: "เด็กหญิงทิพย์ธารา บูระพา" }, { id: "31985", name: "เด็กหญิงนันท์นภัส พงศ์วิเศษ" },
-      { id: "31986", name: "เด็กหญิงปัญญ์นภัส ผาสุข" }, { id: "31987", name: "เด็กหญิงพรชนก เทพวงศ์" },
-      { id: "31989", name: "เด็กหญิงธนวัฒน์ เครือบุตร" }, { id: "31991", name: "เด็กหญิงรวินทร์วรกานต์ บัวแก้ว" },
-      { id: "31992", name: "เด็กหญิงวัชราณี ธรรมสุข" }, { id: "31993", name: "เด็กหญิงกานต์สินี อินสวน" },
-      { id: "31994", name: "เด็กหญิงวิรากานต์ เกษี" }, { id: "31995", name: "เด็กหญิงวิลาสินี ธรรมสุข" },
-      { id: "31996", name: "เด็กหญิงศิรประภา สมวาจา" }, { id: "31997", name: "เด็กหญิงศิรประภา ทองแสน" },
-      { id: "31998", name: "เด็กหญิงสวิชญา ทองอ่อน" }, { id: "31999", name: "เด็กหญิงสุกัญญา พิรุฬ" },
-      { id: "32000", name: "เด็กหญิงสุภาวดี งามเลิศ" }, { id: "33580", name: "เด็กหญิงกัญญาณัฐ ชิณวงค์" }
+    // รายชื่อนักเรียน 34 คน (รหัส 31965-33580)
+    const students = [
+      { id: 31965, name: "นักเรียนคนที่ 1" }, { id: 31966, name: "นักเรียนคนที่ 2" },
+      { id: 31967, name: "นักเรียนคนที่ 3" }, { id: 31968, name: "นักเรียนคนที่ 4" },
+      { id: 31969, name: "นักเรียนคนที่ 5" }, { id: 31970, name: "นักเรียนคนที่ 6" },
+      { id: 31971, name: "นักเรียนคนที่ 7" }, { id: 31972, name: "นักเรียนคนที่ 8" },
+      { id: 31973, name: "นักเรียนคนที่ 9" }, { id: 31974, name: "นักเรียนคนที่ 10" },
+      { id: 31975, name: "นักเรียนคนที่ 11" }, { id: 31976, name: "นักเรียนคนที่ 12" },
+      { id: 31977, name: "นักเรียนคนที่ 13" }, { id: 31978, name: "นักเรียนคนที่ 14" },
+      { id: 31979, name: "นักเรียนคนที่ 15" }, { id: 31980, name: "นักเรียนคนที่ 16" },
+      { id: 31981, name: "นักเรียนคนที่ 17" }, { id: 31982, name: "นักเรียนคนที่ 18" },
+      { id: 31983, name: "นักเรียนคนที่ 19" }, { id: 31984, name: "นักเรียนคนที่ 20" },
+      { id: 31985, name: "นักเรียนคนที่ 21" }, { id: 31986, name: "นักเรียนคนที่ 22" },
+      { id: 31987, name: "นักเรียนคนที่ 23" }, { id: 31988, name: "นักเรียนคนที่ 24" },
+      { id: 31989, name: "นักเรียนคนที่ 25" }, { id: 31990, name: "นักเรียนคนที่ 26" },
+      { id: 31991, name: "นักเรียนคนที่ 27" }, { id: 31992, name: "นักเรียนคนที่ 28" },
+      { id: 31993, name: "นักเรียนคนที่ 29" }, { id: 31994, name: "นักเรียนคนที่ 30" },
+      { id: 31995, name: "นักเรียนคนที่ 31" }, { id: 31996, name: "นักเรียนคนที่ 32" },
+      { id: 31997, name: "นักเรียนคนที่ 33" }, { id: 33580, name: "นักเรียนคนที่ 34" }
     ];
 
-    let students = JSON.parse(localStorage.getItem('cleaning_students')) || INITIAL_STUDENTS;
-    let attendanceData = JSON.parse(localStorage.getItem('cleaning_attendance')) || {};
-    let customHolidays = JSON.parse(localStorage.getItem('cleaning_holidays')) || {};
-    let isAdminLoggedIn = false;
-    let currentChart = null;
-    let currentViewMode = 'daily';
+    let chartInstance = null;
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      const dateInput = document.getElementById('currentDate');
-      if (dateInput) dateInput.value = todayStr;
-      
-      initYearSelect();
-      renderDailyView();
-      if (window.lucide) lucide.createIcons();
-    });
+    // เริ่มต้นระบบ
+    window.onload = () => {
+      document.getElementById('checkDate').value = new Date().toISOString().split('T')[0];
+      document.getElementById('monthPicker').value = new Date().toISOString().slice(0, 7);
+      renderDailyList();
+    };
 
-    function checkIsHoliday(dateStr) {
-      const d = new Date(dateStr);
-      const day = d.getDay();
-      return { isHoliday: (day === 0 || day === 6), isWeekend: (day === 0 || day === 6) };
+    function renderDailyList() {
+      const container = document.getElementById('studentList');
+      container.innerHTML = students.map((s, idx) => `
+        <div class="bg-white p-3.5 rounded-xl shadow-sm border flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <span class="text-xs font-semibold bg-slate-100 text-slate-600 px-2 py-1 rounded">${s.id}</span>
+            <span class="font-medium text-gray-800 text-sm">${s.name}</span>
+          </div>
+          <label class="relative inline-flex items-center cursor-pointer">
+            <input type="checkbox" id="check_${s.id}" class="sr-only peer">
+            <div class="w-11 h-6 bg-slate-200 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-slate-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-emerald-500"></div>
+          </label>
+        </div>
+      `).join('');
     }
 
-    function switchView(mode) {
-      currentViewMode = mode;
-      document.getElementById('dailyView').classList.toggle('hidden', mode !== 'daily');
-      document.getElementById('monthlyView').classList.toggle('hidden', mode !== 'monthly');
-      document.getElementById('tabDaily').className = mode === 'daily' ? "px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-900 transition flex items-center space-x-2" : "px-4 py-2 text-sm font-medium rounded-lg text-slate-600 transition flex items-center space-x-2";
-      document.getElementById('tabMonthly').className = mode === 'monthly' ? "px-4 py-2 text-sm font-medium rounded-lg bg-white shadow-sm text-slate-900 transition flex items-center space-x-2" : "px-4 py-2 text-sm font-medium rounded-lg text-slate-600 transition flex items-center space-x-2";
-      document.getElementById('datePickerContainer').classList.toggle('hidden', mode !== 'daily');
-      document.getElementById('monthPickerContainer').classList.toggle('hidden', mode !== 'monthly');
-      document.getElementById('dailyActions').classList.toggle('hidden', mode !== 'daily');
-      if (mode === 'monthly') renderMonthlyView();
-    }
-
-    function initYearSelect() {
-      const yearSelect = document.getElementById('selectYear');
-      const currentYear = new Date().getFullYear();
-      yearSelect.innerHTML = '';
-      for (let y = currentYear - 2; y <= currentYear + 2; y++) {
-        const opt = document.createElement('option');
-        opt.value = y;
-        opt.textContent = `พ.ศ. ${y + 543}`;
-        if (y === currentYear) opt.selected = true;
-        yearSelect.appendChild(opt);
-      }
-      document.getElementById('selectMonth').value = new Date().getMonth();
-    }
-
-    function renderDailyView() {
-      const dateInput = document.getElementById('currentDate');
-      let selectedDate = dateInput ? dateInput.value : '';
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
-      if (!selectedDate) {
-        selectedDate = todayStr;
-        if (dateInput) dateInput.value = todayStr;
-      }
-
-      const isPastOrFuture = (selectedDate !== todayStr);
-      const canEdit = !isPastOrFuture || isAdminLoggedIn;
-
-      document.getElementById('displaySelectedDate').textContent = formatDateThai(selectedDate);
-      document.getElementById('editModeNotice').classList.toggle('hidden', canEdit);
-
-      const dayData = attendanceData[selectedDate] || {};
-      const tbody = document.getElementById('attendanceTableBody');
-      if (!tbody) return;
-      tbody.innerHTML = '';
-
-      students.forEach((student, index) => {
-        const record = dayData[student.id] || { checked: false, note: '' };
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `
-          <td class="py-3.5 px-4 text-center text-slate-500 font-medium">${index + 1}</td>
-          <td class="py-3.5 px-4 text-slate-600 font-mono text-xs">${student.id}</td>
-          <td class="py-3.5 px-4 font-medium text-slate-800">${student.name}</td>
-          <td class="py-3.5 px-4 text-center">
-            <input type="checkbox" ${record.checked ? 'checked' : ''} ${!canEdit ? 'disabled' : ''} 
-                   onchange="toggleCheck('${student.id}')" class="w-5 h-5 text-emerald-600 rounded cursor-pointer">
-          </td>
-          <td class="py-3.5 px-4">
-            <input type="text" value="${record.note || ''}" ${!canEdit ? 'disabled' : ''} placeholder="ระบุโซนทำความสะอาด..." 
-                   onchange="updateNote('${student.id}', this.value)" class="w-full bg-slate-50 border border-slate-200 rounded-lg px-2.5 py-1 text-xs">
-          </td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    function toggleCheck(studentId) {
-      const dateInput = document.getElementById('currentDate');
-      const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-      if (!attendanceData[selectedDate]) attendanceData[selectedDate] = {};
-      if (!attendanceData[selectedDate][studentId]) attendanceData[selectedDate][studentId] = { checked: true, note: '' };
-      else attendanceData[selectedDate][studentId].checked = !attendanceData[selectedDate][studentId].checked;
-      
-      saveAttendance();
-      syncToGoogleSheets(selectedDate, studentId);
-      renderDailyView();
-    }
-
-    function updateNote(studentId, noteText) {
-      const dateInput = document.getElementById('currentDate');
-      const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-      if (!attendanceData[selectedDate]) attendanceData[selectedDate] = {};
-      if (!attendanceData[selectedDate][studentId]) attendanceData[selectedDate][studentId] = { checked: false, note: noteText };
-      else attendanceData[selectedDate][studentId].note = noteText;
-      
-      saveAttendance();
-      syncToGoogleSheets(selectedDate, studentId);
-    }
-
-    function syncToGoogleSheets(dateStr, studentId) {
-      if (!APPS_SCRIPT_URL || APPS_SCRIPT_URL.includes("ใส่_URL")) return;
-      
-      const student = students.find(s => s.id === studentId);
-      const record = attendanceData[dateStr][studentId];
-      
-      const statusBanner = document.getElementById('syncStatus');
-      const statusText = document.getElementById('syncText');
-      statusBanner.classList.remove('hidden');
-      statusText.textContent = `กำลังซิงค์ ${student.name} ไป Google Sheets...`;
-
-      fetch(APPS_SCRIPT_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          date: dateStr,
-          studentId: student.id,
-          studentName: student.name,
-          checked: record.checked,
-          note: record.note
-        })
-      }).then(() => {
-        statusText.textContent = 'ซิงค์ข้อมูลเข้า Google Sheets สำเร็จ!';
-        setTimeout(() => statusBanner.classList.add('hidden'), 2500);
-      }).catch(err => {
-        console.error(err);
-        statusText.textContent = 'เกิดข้อผิดพลาดในการซิงค์';
-      });
-    }
-
-    function markAll(status) {
-      const dateInput = document.getElementById('currentDate');
-      const selectedDate = dateInput ? dateInput.value : new Date().toISOString().split('T')[0];
-      const now = new Date();
-      const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-      
-      if (selectedDate !== todayStr && !isAdminLoggedIn) {
-        alert('กรุณาเข้าสู่ระบบแอดมิน gun ก่อนแก้ไขข้อมูลย้อนหลัง');
-        return;
-      }
-      if (!attendanceData[selectedDate]) attendanceData[selectedDate] = {};
+    function checkAll(val) {
       students.forEach(s => {
-        const note = attendanceData[selectedDate][s.id]?.note || '';
-        attendanceData[selectedDate][s.id] = { checked: status, note };
-        syncToGoogleSheets(selectedDate, s.id);
-      });
-      saveAttendance();
-      renderDailyView();
-    }
-
-    function onDateChange() { renderDailyView(); }
-    function saveAttendance() { localStorage.setItem('cleaning_attendance', JSON.stringify(attendanceData)); }
-
-    function renderMonthlyView() {
-      const month = parseInt(document.getElementById('selectMonth').value);
-      const year = parseInt(document.getElementById('selectYear').value);
-      const monthNames = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      document.getElementById('monthlyTitleText').textContent = `${monthNames[month]} พ.ศ. ${year + 543}`;
-
-      const daysInMonth = new Date(year, month + 1, 0).getDate();
-      let workingDaysCount = 0;
-      const workingDateStrings = [];
-
-      for (let d = 1; d <= daysInMonth; d++) {
-        const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
-        const dayOfWeek = new Date(dateStr).getDay();
-        if (dayOfWeek !== 0 && dayOfWeek !== 6) {
-          workingDaysCount++;
-          workingDateStrings.push(dateStr);
-        }
-      }
-      document.getElementById('monthlyWorkingDays').textContent = `${workingDaysCount} วัน`;
-
-      const tbody = document.getElementById('monthlyTableBody');
-      tbody.innerHTML = '';
-      let grandTotalChecked = 0;
-      const maxPossible = students.length * workingDaysCount;
-
-      students.forEach((student, index) => {
-        let studentCheckedDays = 0;
-        workingDateStrings.forEach(dateStr => {
-          if (attendanceData[dateStr] && attendanceData[dateStr][student.id]?.checked) studentCheckedDays++;
-        });
-        grandTotalChecked += studentCheckedDays;
-        const pct = workingDaysCount > 0 ? Math.round((studentCheckedDays / workingDaysCount) * 100) : 0;
-        let badge = pct >= 80 ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">ดีเยี่ยม</span>' : pct >= 50 ? '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-100 text-amber-800">ปานกลาง</span>' : '<span class="px-2.5 py-1 rounded-full text-xs font-semibold bg-rose-100 text-rose-700">ต้องปรับปรุง</span>';
-
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-50 transition";
-        tr.innerHTML = `<td class="py-3 px-4 text-center text-slate-500">${index + 1}</td><td class="py-3 px-4 text-xs font-mono">${student.id}</td><td class="py-3 px-4 font-medium">${student.name}</td><td class="py-3 px-4 text-center font-semibold text-emerald-600">${studentCheckedDays}</td><td class="py-3 px-4 text-center text-slate-500">${workingDaysCount}</td><td class="py-3 px-4 text-center font-bold">${pct}%</td><td class="py-3 px-4 text-center">${badge}</td>`;
-        tbody.appendChild(tr);
-      });
-
-      document.getElementById('monthlyTotalChecked').textContent = `${grandTotalChecked} ครั้ง`;
-      const avg = maxPossible > 0 ? Math.round((grandTotalChecked / maxPossible) * 100) : 0;
-      document.getElementById('monthlyAvgPercent').textContent = `${avg}%`;
-      renderMonthlyChart(grandTotalChecked, maxPossible - grandTotalChecked);
-    }
-
-    function renderMonthlyChart(done, pending) {
-      const ctx = document.getElementById('monthlyChart').getContext('2d');
-      if (currentChart) currentChart.destroy();
-      currentChart = new Chart(ctx, {
-        type: 'doughnut',
-        data: { labels: ['ทำเวรแล้ว', 'ยังไม่ได้ทำ'], datasets: [{ data: [done, pending < 0 ? 0 : pending], backgroundColor: ['#22c55e', '#f1f5f9'], borderWidth: 0 }] },
-        options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { display: false } }, cutout: '75%' }
+        const el = document.getElementById(`check_${s.id}`);
+        if(el) el.checked = val;
       });
     }
 
-    function toggleAdminModal() {
-      document.getElementById('adminModal').classList.toggle('hidden');
-      if (isAdminLoggedIn) renderAdminStudents();
-    }
-
-    function loginAdmin() {
-      const u = document.getElementById('adminUser').value;
-      const p = document.getElementById('adminPass').value;
-      if (u === 'gun' && p === '11111111') {
-        isAdminLoggedIn = true;
-        document.getElementById('adminLoginForm').classList.add('hidden');
-        document.getElementById('adminPanelContent').classList.remove('hidden');
-        document.getElementById('adminBtnText').textContent = 'ผู้ดูแลระบบ (gun)';
-        document.getElementById('loginError').classList.add('hidden');
-        renderAdminStudents();
-        renderDailyView();
+    function switchTab(tab) {
+      if(tab === 'daily') {
+        document.getElementById('viewDaily').classList.remove('hidden');
+        document.getElementById('viewMonthly').classList.add('hidden');
+        document.getElementById('tabDaily').className = "px-4 py-1.5 rounded-md font-medium text-sm transition bg-white text-indigo-600 shadow";
+        document.getElementById('tabMonthly').className = "px-4 py-1.5 rounded-md font-medium text-sm transition text-white hover:bg-indigo-600";
       } else {
-        document.getElementById('loginError').classList.remove('hidden');
+        document.getElementById('viewDaily').classList.add('hidden');
+        document.getElementById('viewMonthly').classList.remove('hidden');
+        document.getElementById('tabMonthly').className = "px-4 py-1.5 rounded-md font-medium text-sm transition bg-white text-indigo-600 shadow";
+        document.getElementById('tabDaily').className = "px-4 py-1.5 rounded-md font-medium text-sm transition text-white hover:bg-indigo-600";
+        loadMonthlyStats();
       }
     }
 
-    function logoutAdmin() {
-      isAdminLoggedIn = false;
-      document.getElementById('adminLoginForm').classList.remove('hidden');
-      document.getElementById('adminPanelContent').classList.add('hidden');
-      document.getElementById('adminBtnText').textContent = 'ไอที แอดมิน (gun)';
-      renderDailyView();
+    async function saveData() {
+      const date = document.getElementById('checkDate').value;
+      if(!date) return alert('กรุณาเลือกวันที่');
+
+      const records = students.map(s => ({
+        studentId: s.id,
+        studentName: s.name,
+        checked: document.getElementById(`check_${s.id}`).checked
+      }));
+
+      try {
+        const res = await fetch(API_URL, {
+          method: 'POST',
+          body: JSON.stringify({ date, records })
+        });
+        alert('✅ บันทึกข้อมูลเข้า Google Sheets เรียบร้อยครับ!');
+      } catch(e) {
+        alert('❌ บันทึกไม่สำเร็จ โปรดตรวจสอบการตั้งค่า URL');
+      }
     }
 
-    function renderAdminStudents() {
-      const list = document.getElementById('adminStudentList');
-      list.innerHTML = '';
-      students.forEach((s) => {
-        const tr = document.createElement('tr');
-        tr.className = "hover:bg-slate-100 border-b border-slate-200/60";
-        tr.innerHTML = `
-          <td class="p-2 text-center font-mono font-medium text-slate-500">${s.id}</td>
-          <td class="p-2"><input type="text" id="editName_${s.id}" value="${s.name}" class="w-full bg-white border border-slate-300 rounded px-2 py-1 text-xs"></td>
-          <td class="p-2 text-center"><button onclick="saveStudentName('${s.id}')" class="bg-indigo-600 text-white px-2 py-1 rounded text-[11px]">บันทึก</button></td>
-        `;
-        list.appendChild(tr);
+    async function loadMonthlyStats() {
+      const month = document.getElementById('monthPicker').value; // YYYY-MM
+      try {
+        const res = await fetch(API_URL);
+        const allData = await res.json();
+        
+        // กรองเฉพาะเดือนที่เลือก
+        const monthData = allData.filter(d => d.date && d.date.startsWith(month));
+        
+        let stats = {};
+        students.forEach(s => stats[s.id] = { name: s.name, done: 0, total: 0 });
+
+        monthData.forEach(d => {
+          if(stats[d.studentId]) {
+            stats[d.studentId].total++;
+            if(d.status === 'ทำเวรแล้ว') stats[d.studentId].done++;
+          }
+        });
+
+        // ตารางสรุป
+        let totalDoneAll = 0, totalDaysAll = 0;
+        const tbody = document.getElementById('monthlyTable');
+        tbody.innerHTML = students.map(s => {
+          const st = stats[s.id];
+          const pct = st.total > 0 ? Math.round((st.done / st.total) * 100) : 0;
+          totalDoneAll += st.done;
+          totalDaysAll += st.total;
+          return `
+            <tr class="hover:bg-slate-50">
+              <td class="p-3 text-gray-500 font-mono text-xs">${s.id}</td>
+              <td class="p-3 font-medium text-gray-800">${s.name}</td>
+              <td class="p-3 text-center">${st.done}</td>
+              <td class="p-3 text-center font-bold text-indigo-600">${pct}%</td>
+            </tr>
+          `;
+        }).join('');
+
+        const avgPct = totalDaysAll > 0 ? Math.round((totalDoneAll / totalDaysAll) * 100) : 0;
+        document.getElementById('statPercent').innerText = `${avgPct}%`;
+
+        // แสดงกราฟ
+        renderChart(totalDoneAll, totalDaysAll - totalDoneAll);
+
+      } catch(e) {
+        console.error(e);
+      }
+    }
+
+    function renderChart(done, notDone) {
+      const ctx = document.getElementById('chartMonthly').getContext('2d');
+      if(chartInstance) chartInstance.destroy();
+      chartInstance = new Chart(ctx, {
+        type: 'doughnut',
+        data: {
+          labels: ['ทำเวรแล้ว', 'ยังไม่ได้ทำ'],
+          datasets: [{
+            data: [done, notDone],
+            backgroundColor: ['#10B981', '#F43F5E']
+          }]
+        },
+        options: { responsive: true, maintainAspectRatio: false }
       });
-    }
-
-    function saveStudentName(id) {
-      const input = document.getElementById(`editName_${id}`);
-      if (input && input.value.trim()) {
-        const student = students.find(s => s.id === id);
-        if (student) {
-          student.name = input.value.trim();
-          localStorage.setItem('cleaning_students', JSON.stringify(students));
-          alert(`อัปเดตชื่อเรียบร้อยแล้ว`);
-          renderDailyView();
-        }
-      }
-    }
-
-    function resetSystemData() {
-      if (confirm('คุณต้องการล้างข้อมูลในเครื่องใช่หรือไม่?')) {
-        localStorage.clear();
-        location.reload();
-      }
-    }
-
-    function formatDateThai(dateStr) {
-      if (!dateStr) return '';
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return dateStr;
-      const months = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
-      return `${d.getDate()} ${months[d.getMonth()]} พ.ศ. ${d.getFullYear() + 543}`;
     }
   </script>
 </body>
