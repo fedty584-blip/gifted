@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบเช็คชื่อทำเวรนักเรียน</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header class="top">
+  <h1 class="brand">ระบบเช็คชื่อทำเวร</h1>
+  <div class="right">
+    <span id="saveStatus" class="chip hidden"></span>
+    <button class="btn ghost" onclick="toggleAdminModal()"><span id="adminBtnText">แอดมิน</span></button>
+  </div>
+</header>
+
+<nav id="nav">
+  <button data-page="home" onclick="go('home')"><i data-lucide="home"></i>หน้าหลัก</button>
+  <button data-page="check" onclick="go('check')"><i data-lucide="circle-check"></i>เช็คชื่อทำเวร</button>
+  <button data-page="stats" onclick="go('stats')"><i data-lucide="bar-chart-3"></i>สถิติการทำเวร</button>
+  <button data-page="manage" onclick="go('manage')"><i data-lucide="users"></i>จัดการนักเรียน</button>
+  <button data-page="holidays" onclick="go('holidays')"><i data-lucide="calendar-days"></i>วันหยุดพิเศษ</button>
+</nav>
+
+<main id="main"></main>
+
+<div id="adminModal" class="modal" onclick="if(event.target===this)toggleAdminModal()">
+  <div class="box">
+    <h3>ระบบแอดมิน</h3>
+    <div id="adminLoginForm" class="form">
+      <div><label class="f">ชื่อผู้ใช้</label><input type="text" id="userInput" autocomplete="username" autocapitalize="none"></div>
+      <div><label class="f">รหัสผ่าน</label><input type="text" id="passInput" autocomplete="current-password" style="-webkit-text-security:disc"></div>
+      <p id="loginError" class="err-t hidden"></p>
+      <button class="btn" onclick="loginAdmin()">เข้าสู่ระบบแอดมิน</button>
+    </div>
+    <div id="adminPanelContent" class="form hidden">
+      <div class="notice" style="margin:0">เข้าสู่ระบบแล้ว — ทุกการแก้ไขบันทึกลง GitHub อัตโนมัติ</div>
+      <button class="btn" onclick="saveNow()">บันทึกขึ้น GitHub ทันที</button>
+      <button class="btn del" onclick="resetAttendance()">ล้างข้อมูลการเช็คชื่อทั้งหมด</button>
+      <button class="btn ghost" onclick="logoutAdmin()" style="justify-content:center">ออกจากระบบ</button>
+    </div>
+  </div>
+</div>
+
+<script src="js/config.js"></script>
+<script src="js/crypto.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>

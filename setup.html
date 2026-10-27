@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ตั้งค่าบัญชีแอดมิน</title>
+  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans+Thai:wght@300;400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <h2>ตั้งค่าบัญชีแอดมิน (ทำครั้งเดียว)</h2>
+  <p class="sub">หน้านี้ทำงานในเบราว์เซอร์ของคุณเท่านั้น ไม่ส่ง token หรือรหัสผ่านไปที่ใด</p>
+  <div class="card form">
+    <div><label class="f">Repository (ชื่อบัญชี/ชื่อ repo)</label><input type="text" id="repo" placeholder="gun123/attendance-system"></div>
+    <div><label class="f">GitHub Token</label><input type="text" id="tok" placeholder="github_pat_..." autocomplete="off" style="-webkit-text-security:disc"></div>
+    <h3 style="margin:6px 0 0">ผู้ใช้และรหัสผ่าน</h3>
+    <div class="form2 u"><input type="text" class="un" placeholder="ชื่อผู้ใช้ 1"><input type="text" class="pw" placeholder="รหัสผ่าน" autocomplete="off" style="-webkit-text-security:disc"></div>
+    <div class="form2 u"><input type="text" class="un" placeholder="ชื่อผู้ใช้ 2"><input type="text" class="pw" placeholder="รหัสผ่าน" autocomplete="off" style="-webkit-text-security:disc"></div>
+    <div class="form2 u"><input type="text" class="un" placeholder="ชื่อผู้ใช้ 3"><input type="text" class="pw" placeholder="รหัสผ่าน" autocomplete="off" style="-webkit-text-security:disc"></div>
+    <p id="msg" class="err-t hidden"></p>
+    <button class="btn" onclick="gen()">สร้างไฟล์ auth.json</button>
+  </div>
+
+  <div id="out" class="card hidden">
+    <h3>ได้แล้ว! ทำต่ออีก 3 ขั้นตอน</h3>
+    <p class="small" style="font-size:13px">1) กด "คัดลอก" &nbsp; 2) เปิด repo ใน GitHub → เข้าโฟลเดอร์ <b>data</b> → Add file → Create new file → ตั้งชื่อ <b>auth.json</b> &nbsp; 3) วางข้อความ แล้วกด Commit changes (รอ 1–2 นาที แล้วล็อกอินได้เลย)</p>
+    <p id="warn" class="notice hidden">รหัสผ่านสั้นกว่า 8 ตัว คนที่โหลดไฟล์ auth.json ไปอาจเดารหัสได้ แนะนำให้ใช้ 8 ตัวขึ้นไป</p>
+    <textarea id="json" readonly rows="7" style="width:100%;background:var(--field);color:var(--text);border:1.5px solid var(--line);border-radius:12px;padding:10px;font-size:11px"></textarea>
+    <div style="display:flex;gap:8px;margin-top:10px"><button class="btn" onclick="copyJson()">คัดลอก</button><button class="btn ghost" onclick="downloadJson()">ดาวน์โหลดไฟล์</button></div>
+  </div>
+</main>
+<script src="js/crypto.js"></script>
+<script>
+const $ = id => document.getElementById(id);
+async function gen() {
+  const repo = $("repo").value.trim(), t = $("tok").value.trim(), msg = $("msg");
+  const rows = [...document.querySelectorAll(".u")].map(r => [r.querySelector(".un").value.trim(), r.querySelector(".pw").value]).filter(([u, p]) => u && p);
+  msg.classList.add("hidden");
+  if (!repo.includes("/") || !t || !rows.length) { msg.textContent = "กรอก repository, token และผู้ใช้อย่างน้อย 1 คนให้ครบ"; msg.classList.remove("hidden"); return; }
+  const users = {};
+  for (const [u, p] of rows) users[await userKey(u)] = await encryptCreds(p, { r: repo, t });
+  $("json").value = JSON.stringify({ users }, null, 1);
+  $("warn").classList.toggle("hidden", !rows.some(([, p]) => p.length < 8));
+  $("out").classList.remove("hidden");
+  $("out").scrollIntoView({ behavior: "smooth" });
+}
+function copyJson() { navigator.clipboard.writeText($("json").value).then(() => alert("คัดลอกแล้ว")); }
+function downloadJson() {
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([$("json").value], { type: "application/json" }));
+  a.download = "auth.json"; a.click();
+}
+</script>
+</body>
+</html>
